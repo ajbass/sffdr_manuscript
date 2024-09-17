@@ -17,7 +17,7 @@ df$BP38 <- as.numeric(unlist(str_split(df$alt38, "[:_]", simplify = T))[,2])
 df_LD <- as_tibble(df) %>% dplyr::select(rsid, BP38, group)
 colnames(df_LD) <- c("ID", "POS", "LD")
 
-# Load data
+# Load data: p-values from PLINK
 pdf <- readRDS("./pcombined_pvals.rds")
 cdf <- readRDS("./ccombined_pvals.rds")
 fcdf <- readRDS("./cfcombined_pvals.rds")

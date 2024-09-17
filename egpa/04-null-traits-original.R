@@ -8,7 +8,7 @@ library(sffdr)
 library(tidyverse)
 library(forcats)
 
-# Load data
+# Load data: p-values from PLINK
 fcdf <- readRDS("../ukbb/cfcombined_pvals.rds")
 fcdf <- fcdf %>% select(trait, downsample, `#CHROM`, OBS_CT, POS, ID, indep_snps, BETA, SE,  T_STAT,P, type)
 

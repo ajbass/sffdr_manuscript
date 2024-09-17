@@ -9,4 +9,4 @@ Overview of files:
 - `06-sffdr.R`: applying sfFDR to GWAS of BMI with obesity-related informative traits
 - `07-sffdr-null.R`: applying sfFDR to GWAS of BMI with non-informative traits (permuted) in the UK Biobank data 
     
-The above code uses `../00-helper.R`. 
+The above code uses `../00-helper.R`. Note that the LD blocks from `05-LD-blocks.R` were combined into the file `ukbb_ldblocks_01.rds`.

@@ -7,7 +7,7 @@ set.seed(12345)
 library(sffdr)
 library(tidyverse)
 
-# Gather null summary statistics
+# Gather null summary statistics from PLINK
 files <- list.files("../ukbb/data/assoc_null/", full.names = T)
 cdf <- NULL
 prop <- seq(0.1, 1, 0.1)

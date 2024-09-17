@@ -12,10 +12,10 @@ library(fFDR)
 library(sffdr)
 library(tidyverse)
 
-# data preparation
+# data preparation: p-values from PLINK on permuted phenotypes
 library(tidyverse)
 files <- list.files("./data/assoc_null/",full.names = T)
-pdf <- cdf <- fcdf <- NULL
+pdf <- fcdf <- NULL
 for (f in files) {
   out <- read_tsv(f)
   str <-  str_split(str_split(f, pattern = "subset")[[1]][2], "\\.")[[1]]
@@ -41,12 +41,8 @@ saveRDS(cdf2, "./null_data.rds")
 
 # Load data
 pdf <- readRDS("./pcombined_pvals.rds")
-cdf <- readRDS("./ccombined_pvals.rds")
 fcdf <- readRDS("./null_data.rds")
 pdf <- pdf %>%
-  select(trait, downsample, `#CHROM`, POS, ID, indep_snps, P, type) %>%
-  left_join(ld, multiple = "first")
-cdf <- cdf %>%
   select(trait, downsample, `#CHROM`, POS, ID, indep_snps, P, type) %>%
   left_join(ld, multiple = "first")
 fcdf <- fcdf %>%
@@ -65,11 +61,6 @@ df <- cbind(bfp[, 1:8],
 fcdf <- df %>%
   filter(!is.na(bfp), !is.na(cholesterol), !is.na(triglycerides)) %>% distinct()
 fcdf_bmi <- fcdf %>% filter(downsample == 1)
-cdf_bmi <- cdf %>% filter(trait == "bmi")
-df_out_null <- NULL
-fcdf_cor <- readRDS("./annotations.rds")
-colnames(fcdf_cor)[1] <- "ID"
-colnames(fcdf_cor)[4] <- "POS"
 prop = seq(0.1, 1, 0.1)
 for (pp in 1:10) {
   for (i in  1:10) {
