@@ -4,10 +4,10 @@ This repository contains code to reproduce the results in
 
 Overview of directory:
 
-    - `egpa/`: EGPA analysis
-    - `simulation_study/`: simulation study
-    - `ukbb/`: UK Biobank study
-    - `00-helper.R`: helper functions used throughout
-    - `sffdr-figures.R`: code to produce plots in manuscript
+- `egpa/`: EGPA analysis
+- `simulation_study/`: simulation study
+- `ukbb/`: UK Biobank study
+- `00-helper.R`: helper functions used throughout
+- `sffdr-figures.R`: code to produce plots in manuscript
 
 See subdirectories for additional details.
