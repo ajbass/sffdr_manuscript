@@ -1,6 +1,6 @@
 This repository contains code to reproduce the results in
 
-> Bass AJ, Wallace C. Pleiotropy-informed significance analysis of genome-wide association studies with functional false discovery rates. *Submitted*; 2024.
+> Bass AJ, Wallace C. Exploiting pleiotropy to enhance variant discovery with functional false discovery rates. *Submitted*; 2024.
 
 Overview of directory:
 
