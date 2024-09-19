@@ -14,7 +14,6 @@ library(patchwork)
 library(coloc)
 
 ############ UK Biobank ###############
-
 # load data
 dfc <- dfc_cor <- NULL
 prop <- seq(0.1, 1, 0.1)
@@ -25,7 +24,7 @@ for (i in 1:10) {
   dfc_cor <- rbind(dfc_cor, df_cor)
 }
 
-# Get prediction
+# Get sample size predictions
 oracle <- dfc_cor %>%
   dplyr::group_by(downsample) %>%
   dplyr::summarise(tot = sum(p_meta < 5e-8, na.rm = T))
@@ -96,12 +95,12 @@ ggsave(p,
 
 # Overlap with meta-analysis approach
 status <- dfc_cor %>%
-  dplyr::mutate(status = meta_fp < 5e-8) %>%
+  dplyr::mutate(status = p_meta < 5e-8) %>%
   dplyr::select(CHR, POS, ID, downsample, status)
 colnames(status) <- c("CHR", "BP", "SNP", "downsample", "status")
 
 t1 <- dfc_cor %>%
-  dplyr::mutate(status = meta_fp < 5e-8) %>%
+  dplyr::mutate(status = p_meta < 5e-8) %>%
   dplyr::mutate(method = "Functional P") %>%
   dplyr::group_by(downsample, method) %>%
   dplyr::summarise(Overlap = sum(fp.rand[status] < 5e-8, na.rm = T),
@@ -109,7 +108,7 @@ t1 <- dfc_cor %>%
             Prop = Overlap / (Overlap + Distinct))
 
 t2 <- dfc_cor %>%
-  dplyr::mutate(status = meta_fp < 5e-8) %>%
+  dplyr::mutate(status = p_meta < 5e-8) %>%
   dplyr::mutate(method = "Raw P") %>%
   dplyr::group_by(downsample, method) %>%
   dplyr::summarise(Overlap = sum(p[status] < 5e-8, na.rm = T),
@@ -244,9 +243,7 @@ cbbPalette <- c("High" = "black", "Medium"= "darkgrey", "Low" = "lightgrey")
 
 p1 <- out %>%
   dplyr::filter(quantity == "fqvalues",
-                prior.strength != "None",
-                prior.coverage == 0.025,
-                !(method %in% c("sffdr_mono" ))) %>%
+                prior.strength != "None") %>%
   dplyr::group_by(prior.strength, threshold, method, signal.density, signal.density.z, prior.coverage) %>%
   dplyr::summarise(empfdr = mean(empfdr),
             emptdr = mean(emptdr)) %>%
@@ -271,9 +268,8 @@ ggsave(p1,
 
 p1 <- out %>%
   dplyr::filter(quantity == "fqvalues",
-                prior.strength != "None", method %in% c("sfFDR", "Oracle", "Q-value"),
-                prior.coverage == 0.025,
-                !(method %in% c("sffdr_mono" ))) %>%
+                prior.strength != "None",
+                method %in% c("sfFDR", "Oracle", "Q-value")) %>%
   dplyr::group_by(prior.strength, threshold, method, signal.density, signal.density.z, prior.coverage) %>%
   dplyr::summarise(threshold = mean(threshold),
                    discoveries = mean(discoveries)) %>%
@@ -299,9 +295,7 @@ ggsave(p1,
 out$method <- factor(out$method, levels = c( "Oracle","Q-value", "sfFDR", "AdaPT", "Boca-Leek", "CAMT"))
 p1 <- out %>%
   dplyr::filter(quantity == "fqvalues",
-                prior.coverage == 0.025,
-                threshold %in% c( 0.01),
-                !(method %in% c("sffdr_mono" ))) %>%
+                threshold %in% c( 0.01)) %>%
   dplyr::group_by(prior.strength, threshold, method, signal.density, signal.density.z, prior.coverage) %>%
   ggplot(aes(x = as.factor(method), y = empfdr), group = signal.density.z) +
   geom_boxplot(outlier.size = 0.5) +
@@ -329,9 +323,7 @@ out2 <- out %>%
   dplyr::left_join(out_tmp)
 
 p1 <- out2 %>%
-  dplyr::filter(quantity == "fqvalues",
-                prior.coverage == 0.025,
-                !(method %in% c("sffdr_mono"))) %>%
+  dplyr::filter(quantity == "fqvalues") %>%
   dplyr::group_by(prior.strength, Oracle, threshold, method, signal.density, signal.density.z, prior.coverage) %>%
   ggplot(aes(x = as.factor(method), y = pi0-Oracle, color = factor(prior.strength)), group = signal.density.z) +
   geom_boxplot() +
@@ -380,15 +372,12 @@ cbbPalette <- c("High" = "black", "Medium"= "darkgrey", "Low" = "lightgrey")
 sd.labs <- c("High power: P", "Medium power: P", "Low power: P")
 names(sd.labs) <- c("High", "Medium", "Low")
 
-fnames <- c(TeX("Standard $p$-value"), TeX("sfFDR $p_f$-value"), TeX("Oracle $p_f$-value"))
-names(fnames) <- c("Raw P", "Functional P", "Oracle")
-
-
 fnames <- c(
-  'Raw P' = "Standard p-value" , #@TeX("Standard $p$-value"),
-  'Functional P' = "sfFDR functional p-value",#TeX("sfFDR $p_f$-value"),
-  'Oracle' = "Oracle functional p-value"#TeX("Oracle $p_f$-value")
+  'Raw P' = "Standard p-value" ,
+  'Functional P' = "sfFDR functional p-value",
+  'Oracle' = "Oracle functional p-value"
 )
+
 global_labeller <- labeller(
   signal.density = sd.labs,
   method = fnames
@@ -396,9 +385,7 @@ global_labeller <- labeller(
 
 p1 <- out %>%
   dplyr::filter(quantity == "fpvalues",
-                prior.coverage == 0.025,
-                threshold %in% c(0.0001),
-                method != "sffdr_mono") %>%
+                threshold %in% c(0.0001)) %>%
   dplyr::group_by(prior.strength, threshold, method, signal.density, signal.density.z, prior.coverage) %>%
   ggplot(aes(x = factor(prior.strength), y = empfdr,color = signal.density.z), group = signal.density.z) + geom_boxplot() +
   facet_grid(signal.density~method,
@@ -423,9 +410,7 @@ names(z.labs) <- c("High", "Medium", "Low")
 
 p1 <- out %>%
   dplyr::filter(quantity == "fpvalues",
-                prior.coverage == 0.025,
-                threshold %in% c(5e-8),
-                method != "sffdr_mono") %>%
+                threshold %in% c(5e-8)) %>%
   dplyr::group_by(prior.strength, threshold, method, signal.density, signal.density.z, prior.coverage) %>%
   ggplot(aes(x = factor(prior.strength),
              y = discoveries,
@@ -449,9 +434,8 @@ ggsave(p1,
 # Main Figure 2 in manuscript
 p0 <- out %>%
   dplyr::filter(quantity == "fpvalues",
-                prior.coverage == 0.025,
-                threshold %in% c(5e-8), signal.density == "Medium",
-                method != "sffdr_mono") %>%
+                threshold %in% c(5e-8),
+                signal.density == "Medium") %>%
   dplyr::group_by(prior.strength, threshold, method, signal.density, signal.density.z, prior.coverage) %>%
   ggplot(aes(x = factor(prior.strength),
              y = discoveries,
@@ -468,9 +452,7 @@ p0 <- out %>%
 p2 <- outQ %>%
   dplyr::filter(quantity == "fqvalues",
                 prior.strength != "None", method %in% c("sfFDR", "Oracle", "Q-value"),
-                prior.coverage == 0.025,
-                signal.density == "Medium",
-                !(method %in% c("sffdr_mono" ))) %>%
+                signal.density == "Medium") %>%
   dplyr::group_by(prior.strength, threshold, method, signal.density, signal.density.z, prior.coverage) %>%
   dplyr::summarise(threshold = mean(threshold),
                    discoveries = mean(discoveries)) %>%
@@ -522,14 +504,10 @@ names(sd.labs) <- c("High", "Medium", "Low")
 sd.labs <- c("High power: P", "Medium power: P", "Low power: P")
 names(sd.labs) <- c("High", "Medium", "Low")
 
-fnames <- c(TeX("Standard $p$-value"), TeX("sfFDR $p_f$-value"), TeX("Oracle $p_f$-value"))
-names(fnames) <- c("Raw P", "Functional P", "Oracle")
-
-
 fnames <- c(
-  'Raw P' = "Standard p-value" , #@TeX("Standard $p$-value"),
-  'Functional P' = "sfFDR functional p-value",#TeX("sfFDR $p_f$-value"),
-  'Oracle' = "Oracle functional p-value"#TeX("Oracle $p_f$-value")
+  'Raw P' = "Standard p-value" ,
+  'Functional P' = "sfFDR functional p-value",
+  'Oracle' = "Oracle functional p-value"
 )
 global_labeller <- labeller(
   signal.density = sd.labs,
@@ -538,9 +516,7 @@ global_labeller <- labeller(
 
 p1 <- out %>%
   dplyr::filter(quantity == "fpvalues",
-         prior.coverage == 0.025,
-         threshold %in% c(0.0001),
-         method != "sffdr_mono") %>%
+         threshold %in% c(0.0001)) %>%
   dplyr::group_by(prior.strength, threshold, method, signal.density, signal.density.z, prior.coverage) %>%
   ggplot(aes(x = factor(prior.strength), y = empfdr,color = signal.density.z), group = signal.density.z) + geom_boxplot() +
   facet_grid(signal.density~method,
@@ -564,9 +540,7 @@ names(z.labs) <- c("High", "Medium", "Low")
 
 p1 <- out %>%
   dplyr::filter(quantity == "fpvalues",
-         prior.coverage == 0.025,
-         threshold %in% c(5e-8),
-         method != "sffdr_mono") %>%
+         threshold %in% c(5e-8)) %>%
   dplyr::group_by(prior.strength, threshold, method, signal.density, signal.density.z, prior.coverage) %>%
   ggplot(aes(x = factor(prior.strength),
              y = discoveries,
@@ -595,8 +569,7 @@ names(z.labs) <- c("High", "Medium", "Low")
 cbbPalette <- c("High" = "black", "Medium"= "darkgrey", "Low" = "lightgrey")
 
 p1 <- out %>%
-  dplyr::filter(quantity == "fqvalues",
-                prior.coverage == 0.025) %>%
+  dplyr::filter(quantity == "fqvalues") %>%
   dplyr::group_by(prior.strength, threshold, method, signal.density, signal.density.z, prior.coverage) %>%
   dplyr::summarise(empfdr = mean(empfdr),
                    emptdr = mean(emptdr)) %>%
@@ -626,9 +599,7 @@ out$method <- fct_relevel(out$method,
                           "Oracle")
 p1 <- out %>%
   dplyr::filter(quantity == "fqvalues",
-                prior.coverage == 0.025,
-                threshold %in% c( 0.01),
-                !(method %in% c("sffdr_mono" ))) %>%
+                threshold %in% c( 0.01)) %>%
   dplyr::group_by(prior.strength, threshold, method, signal.density, signal.density.z, prior.coverage) %>%
   ggplot(aes(x = as.factor(method), y = empfdr), group = signal.density.z) +
   geom_boxplot(outlier.size = 0.5) +
@@ -1183,22 +1154,6 @@ tab <- out %>%
   distinct()  %>% dplyr::rename(pi0 = fPIi,
                          lfdr = flfdri)
 out %>%
-    dplyr::ungroup() %>%
-    dplyr::mutate(BF = (mean(fPIi) / (1-mean(fPIi))) * ((1-flfdri) / flfdri)) %>%
-    dplyr::group_by(gene) %>%
-    dplyr::mutate(PIP = BF / sum(BF)) %>%
-    dplyr::arrange(-1*PIP) %>%
-    dplyr::mutate(CD = cumsum(PIP)) %>%
-    dplyr::left_join(overlap) %>%
-    dplyr::group_by(BP38, CHR38, gene) %>%
-    dplyr::mutate(shape = ifelse(is.na(shape), 16, shape)) %>%
-    dplyr::ungroup() %>%
-    group_by(gene) %>%
-    dplyr::mutate(color = c(rep(TRUE, length(CD[CD < 0.95]) + 1), rep(FALSE, length(CD[CD > 0.95])-1))) %>%
-    dplyr::group_by(CHR38, BP38) %>%
-    dplyr::mutate(color= ifelse(gene == "TSLP", ifelse(PIP >0.9, TRUE, FALSE), color)) %>%
-    dplyr::ungroup() %>% filter(color == TRUE) %>% group_by(gene) %>% dplyr::select(CHR38, BP38, ALT, SNPID, gene, P, ASTAO, ASTCO, EOSC, flfdri, fPIi, BF, PIP) %>% distinct() %>%  summarise(length(SNPID))
-out %>%
   dplyr::ungroup() %>%
   dplyr::mutate(BF = (mean(fPIi) / (1-mean(fPIi))) * ((1-flfdri) / flfdri)) %>%
   dplyr::group_by(gene) %>%
@@ -1215,29 +1170,6 @@ out %>%
   dplyr::mutate(color= ifelse(gene == "TSLP", ifelse(PIP >0.9, TRUE, FALSE), color)) %>%
   dplyr::ungroup() %>% filter(color == TRUE) %>% group_by(gene) %>% dplyr::select(CHR38, BP38, ALT, SNPID, gene, P, ASTAO, ASTCO, EOSC, flfdri, fPIi, BF, PIP) %>% distinct() %>%  summarise(length(SNPID))
 saveRDS(tab, file = "EGPA_CI.rds")
-
-p_visual <- out %>% filter(gene == "RUNX1") %>%
-  dplyr::ungroup() %>%
-  dplyr::mutate(BF = (mean(fPIi) / (1-mean(fPIi))) * ((1-flfdri) / flfdri)) %>%
-  dplyr::group_by(gene) %>%
-  dplyr::mutate(PIP = BF / sum(BF)) %>%
-  dplyr::arrange(-1*PIP) %>%
-  dplyr::mutate(CD = cumsum(PIP)) %>%
-  dplyr::left_join(overlap) %>%
-  dplyr::group_by(BP38, CHR38, gene) %>%
-  dplyr::mutate(shape = ifelse(is.na(shape), 16, shape)) %>%
-  dplyr::ungroup() %>%
-  group_by(gene) %>%
-  dplyr::mutate(color = c(rep(TRUE, length(CD[CD < 0.95]) + 1), rep(FALSE, length(CD[CD > 0.95])-1))) %>%
-  dplyr::group_by(CHR38, BP38) %>%
-  dplyr::ungroup() %>%
-  ggplot(aes(x = BP38, y = -log10(fPi))) +
-  geom_point(size =1.5, alpha = 0.7) +
-  xlab("Position") +
-  ylab("PP") +
-  theme_bw() +
-  theme(axis.text.x=element_blank(),
-        axis.ticks.x=element_blank())
 
 # CI overlap with summary statistics
 dt <- out %>%
@@ -1328,4 +1260,3 @@ ggsave(p,
        width = 4,
        dpi = 1000,
        height = 4)
-

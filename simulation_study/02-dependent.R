@@ -23,7 +23,7 @@ run_t1e <- function(m,
                       signal.density.z = signal.density.z,
                       prior.coverage = prior.coverage)
   z <- ivars$z
-  
+
   # generate primary study
   study <- generate_p(z = z[, 1:num.z, drop = F],
                       pi0z = 1 - ivars$pi0,
@@ -36,8 +36,8 @@ run_t1e <- function(m,
   # rank transform summary statistics
   z <- apply(ivars$z, 2, FUN = function(x) rank(x)/length(x))
   colnames(z) <- paste0("z", 1:ncol(z))
-  
-  # LD blocks: assign cluster sizes to independent SNPs 
+
+  # LD blocks: assign cluster sizes to independent SNPs
   cluster_size <- readRDS("./main-sffdr/LDblocks/ukbb_set_sizes.rds")
   cluster_size <- sample(cluster_size, replace = T, size = length(study$p))
   zp <- ivars$p[rep(1:nrow(ivars$p), times = cluster_size),]
@@ -51,16 +51,15 @@ run_t1e <- function(m,
                    times = cluster_size)
 
   # apply sffdr
-  create_model <- sffdr:::fmodel(zp, knots = c(0.005, 0.01, 0.025, 0.05, 0.1))
+  create_model <- sffdr:::pi0_model(z, knots = c(0.005, 0.01, 0.025, 0.05, 0.1))
 
-  fpi0 <- sffdr:::efpi0(p = np,
-                        dt = create_model$zt,
-                        fm = create_model$fmod,
-                        indep_snps = indp_status,
-                        method = pi0.method,
-                        lambda = seq(0.05, 0.9, 0.05))$table$fpi0
+  fpi0 <- sffdr:::fpi0est(p = study$p,
+                          z = create_model$zt,
+                          pi0_model = create_model$fmod,
+                          method = pi0.method,
+                          lambda = seq(0.05, 0.9, 0.05))$table$fpi0
 
-  tmp <- sffdr:::sffdr(np,
+  tmp <- sffdr:::sffdr(study$p,
                        surrogate = fpi0,
                        monotone.window = NULL,
                        transformation = transformation,

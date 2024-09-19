@@ -21,24 +21,27 @@ apply_sffdr <- function(p,
   # initialization
   fqvalues <- fpi0 <- flfdr <- fpvalues <- rep(NA, length(p))
 
-  # run sffdr
+  # Create model for GAM
   create_model <- sffdr:::pi0_model(as.matrix(z),
                                     knots = knots)
 
+  # Apply GAM to estimate functional pi0
   fpi0 <- sffdr:::fpi0est(p = as.matrix(p),
                           z = create_model$zt,
                           indep_snps = indep_snps,
                           pi0_model = create_model$fmod,
                           lambda = lambda,
                           method = method)
-
   fpi0 <- fpi0$fpi0
+
+  # Apply sfFDR using the surrogate variable (fpi0)
   sffdr.out <- sffdr:::sffdr(p,
                              fpi0 = fpi0,
                              indep_snps = indep_snps,
                              epsilon = epsilon,
                              nn = nn)
 
+  # Extract significance quantities
   fqvalues  <- sffdr.out$fqvalues
   fpvalues  <- sffdr.out$fpvalues
   flfdr  <- sffdr.out$flfdr
@@ -50,9 +53,17 @@ apply_sffdr <- function(p,
               fpi0 = fpi0))
 }
 
+# P-values: evaluating the number of discoveries and type I error rate
+#
+# @param p: p-values of primary study
+# @param oracle: true status of hypotheses
+# @param threshold: significance threshold
+#
+# @return data frame of significance results from p-values
 type1error <- function(p,
                        oracle,
-                       threshold = c(5e-8, 5e-7, 5e-6, 5e-5, 1e-4, 5e-4, 1e-3, 5e-3, 1e-2, 5e-2, 0.1 )) {
+                       threshold = c(5e-8, 5e-7, 5e-6, 5e-5, 1e-4,
+                                     5e-4, 1e-3, 5e-3, 1e-2, 5e-2, 0.1)) {
   out <- NULL
   for (i in 1:length(threshold)) {
     alpha <- threshold[i]
@@ -69,18 +80,13 @@ type1error <- function(p,
   return(out)
 }
 
-create_bool <- function(z, thres = 1e-3) {
-  boo <- rep(FALSE, nrow(z))
-  zmin <- apply(z, 1, min)
-  if (min(zmin) < thres) {
-    id <- which.min(zmin)
-  } else {
-    id <- sample(1:nrow(z), size = 1)
-  }
-  boo[id] <- TRUE
-  return(boo)
-}
-
+# Q-values: evaluating the number of discoveries and FDR
+#
+# @param p: p-values of primary study
+# @param oracle: true status of hypotheses
+# @param fdr: FDR threshold
+#
+# @return data frame of significance results from q-values
 sumfunc <- function(q, oracle, fdr) {
   out <- NULL
   for (i in 1:length(fdr)) {
@@ -95,4 +101,22 @@ sumfunc <- function(q, oracle, fdr) {
     out <- rbind(tmp, out)
   }
   return(out)
+}
+
+# SNP selection based on informative variables
+#
+# @param z: summary statistics of informative variables
+# @param thres: threshold to select based on informative variables
+#
+# @return vector of selected SNPs in and LD region
+create_bool <- function(z, thres = 1e-3) {
+  boo <- rep(FALSE, nrow(z))
+  zmin <- apply(z, 1, min)
+  if (min(zmin) < thres) {
+    id <- which.min(zmin)
+  } else {
+    id <- sample(1:nrow(z), size = 1)
+  }
+  boo[id] <- TRUE
+  return(boo)
 }

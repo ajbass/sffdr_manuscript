@@ -18,11 +18,13 @@ primary <- c("EGPA")
 for (trait in primary) {
   out_EGPA <- read.delim(paste0("./processed/", trait, ".tsv"), sep = "\t")
 
+  # Remove any missing data
   out_EGPA <- out_EGPA %>% left_join(df)
   out_train <- out_EGPA %>%
     dplyr::select(SNPID, P, ASTAO, ASTCO, EOSC, LD, CHR38, BP38, INFO, ALT) %>%
     dplyr::filter(!is.na(ASTAO) & !is.na(ASTCO) & !is.na(EOSC))
 
+  # Select representative SNPs randomly and based on informative variables
   out_tmp2 <- out_train %>%
     filter(is.na(LD)) %>%
     mutate(indep_snp_rand = FALSE,
@@ -40,9 +42,8 @@ for (trait in primary) {
   indep_snps_inform <- out_train$indep_snp_inform[id]
   indep_snps_rand <- out_train$indep_snp_rand[id]
 
+  # apply sffdr w/ randomly selected SNP and informative-selected
   knots <-  c(0.005, 0.01, 0.025, 0.05, 0.1)
-
-  # apply sffdr w/ randomly selected SNP and informative-selecteds
   out_sffdr_indp_r <- apply_sffdr(p, z,
                                   indep_snps_rand,
                                   epsilon = 1e-15,
@@ -61,7 +62,7 @@ for (trait in primary) {
   fp_i <- out_sffdr_indp_i$fpvalues
   out_train2 <- out_train[id,]
 
-  # Save to main figure
+  # Save output
   out_train3 <- out_train2
   out_train3$fPi <-  fp_i
   out_train3$flfdri <-  out_sffdr_indp_i$flfdr

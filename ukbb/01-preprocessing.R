@@ -24,11 +24,14 @@ tri <- which(names %in% "f.30870.0.0")
 
 id <- c(ID, age, sex, BMI, BFP, cholesterol, tri, used_in_PCA, PCs)
 
-## Load age + BMI
+## Load data
 df <- read_delim(path_to_phenotype, delim = "\t",
                 col_select = id)
-colnames(df) <- c("IID", "age", "sex", "bmi", "bfp", "cholesterol", "triglycerides",  "used.in.pca", paste0("PC", 1:20))
+colnames(df) <- c("IID", "age", "sex", "bmi",
+                  "bfp", "cholesterol", "triglycerides",
+                  "used.in.pca", paste0("PC", 1:20))
 
+# Remove individuals not used in PCA calculation
 id <- !is.na(df$used.in.pca)
 df0 <- df[id,]
 df0 <- df0 %>%
@@ -56,7 +59,7 @@ withdrawals <- read_tsv("/home/ab3105/rds/rds-mrc-bsu-csoP2nj6Y6Y/biobank/phenot
 withdrawals <- withdrawals %>% rename(IID = X1)
 out <- out %>% filter(!(IID %in% withdrawals$IID))
 
-# save sample info for R
+# Save sample info for R
 saveRDS(out, "~/rds/hpc-work/ukbiobank/sample_info.rds")
 
 ## Save files for plink

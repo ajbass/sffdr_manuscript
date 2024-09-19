@@ -3,10 +3,10 @@
 Overview of files:
 
 - `01-preprocessing.R`: preprocesses UK Biobank data 
-- `03-subset.R`: downsamples UK Biobank data
-- `04-merge.R`: combines UK Biobank significance results
-- `05-LD-blocks.R`: estimate independent LD blocks
-- `06-sffdr.R`: applying sfFDR to GWAS of BMI with obesity-related informative traits
-- `07-sffdr-null.R`: applying sfFDR to GWAS of BMI with non-informative traits (permuted) in the UK Biobank data 
+- `02-subset.R`: downsamples UK Biobank data
+- `03-merge.R`: combines UK Biobank significance results
+- `04-LD-blocks.R`: estimate independent LD blocks
+- `05-sffdr.R`: applying sfFDR to GWAS of BMI with obesity-related informative traits
+- `06-sffdr-null.R`: applying sfFDR to GWAS of BMI with non-informative traits (permuted) in the UK Biobank data 
     
-The above code uses `../00-helper.R`. Note that the files generated from `05-LD-blocks.R` were combined into the file `ukbb_ldblocks_01.rds`.
+The above code uses `../00-helper.R`.

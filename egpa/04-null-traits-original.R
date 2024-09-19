@@ -12,7 +12,7 @@ library(forcats)
 fcdf <- readRDS("../ukbb/cfcombined_pvals.rds")
 fcdf <- fcdf %>% select(trait, downsample, `#CHROM`, OBS_CT, POS, ID, indep_snps, BETA, SE,  T_STAT,P, type)
 
-# Reorganize data: Use original obesity-related traits
+# Reorganize data: use original obesity-related traits
 bfp <- fcdf %>%
   filter(trait == "bfp", downsample == 1)
 cholesterol <- fcdf %>%
@@ -29,6 +29,7 @@ df_cond <- df %>%
 df_cond <- df_cond %>% dplyr::rename(CHR38 ="#CHROM", BP = POS) %>%
   select(BP, CHR38, bfp, cholesterol, triglycerides)
 
+# load EGPA
 out_raw <- read.delim(paste0("./primary/EGPA_Lyons_31719529_1-hg38.tsv.gz"), sep = "\t")
 map <- out_raw %>% select(SNPID, BP38, BP, CHR38) %>% mutate(CHR38 = as.numeric(CHR38))
 
@@ -42,11 +43,13 @@ primary <- c("EGPA")
 ret_df <- NULL
 dfc <- df_cond
 for (trait in primary) {
+  # Merge data sets
   out_EGPA <- read.delim(paste0("./processed/", trait, ".tsv"), sep = "\t")
   out_EGPA <- out_EGPA %>%
     left_join(df_LD) %>%
     left_join(map)
 
+  # remove missing data
   out_EGPA2 <- dfc %>%
     left_join(out_EGPA, by = c("CHR38", "BP"))
   out_train <- out_EGPA2 %>%
@@ -54,6 +57,7 @@ for (trait in primary) {
     dplyr::select(SNPID, P, bfp, cholesterol, triglycerides, LD) %>%
     dplyr::filter(!is.na(bfp) & !is.na(cholesterol) & !is.na(triglycerides))
 
+  # select representative SNPs
   out_tmp2 <- out_train %>%
     filter(is.na(LD)) %>%
     mutate(indep_snp_rand = FALSE,
@@ -70,6 +74,7 @@ for (trait in primary) {
   z <- z[id,]
   indep_snps_inform <- out_train$indep_snp_inform[id]
 
+  # apply sffdr
   knots <- c(0.005, 0.01, 0.025, 0.05, 0.1)
   out_sffdr_indp_i <- apply_sffdr(p, z,
                                   indep_snps_inform,

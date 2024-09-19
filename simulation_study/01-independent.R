@@ -23,7 +23,7 @@ run_t1e <- function(m,
                       signal.density.z = signal.density.z,
                       prior.coverage = prior.coverage)
   z <- ivars$z
-  
+
   # generate primary study p-values
   study <- generate_p(z = z[, 1:num.z, drop = F],
                       pi0z = 1 - ivars$pi0,
@@ -37,13 +37,13 @@ run_t1e <- function(m,
   colnames(z) <- paste0("z", 1:ncol(z))
 
   # apply sffdr
-  create_model <- sffdr:::fmodel(z, knots = c(0.005, 0.01, 0.025, 0.05, 0.1))
+  create_model <- sffdr:::pi0_model(z, knots = c(0.005, 0.01, 0.025, 0.05, 0.1))
 
-  fpi0 <- sffdr:::efpi0(p = study$p,
-                        dt = create_model$zt,
-                        fm = create_model$fmod,
-                        method = pi0.method,
-                        lambda = seq(0.05, 0.9, 0.05))$table$fpi0
+  fpi0 <- sffdr:::fpi0est(p = study$p,
+                          z = create_model$zt,
+                          pi0_model = create_model$fmod,
+                          method = pi0.method,
+                          lambda = seq(0.05, 0.9, 0.05))$table$fpi0
 
   tmp <- sffdr:::sffdr(study$p,
                        surrogate = fpi0,
@@ -104,7 +104,7 @@ run_t1e <- function(m,
                bl.sum)
   dt3$quantity <- "fqvalues"
   dt3 <- rbind(dt2, dt3)
-  
+
   # global pi0 values
   oracle_pi0 <- mean(study$oracle_pi0)
   sffdr_pi0 <- mean(tmp$pi0)
