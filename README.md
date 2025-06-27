@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/1009555822.svg)](https://doi.org/10.5281/zenodo.15754143)
+
 This repository contains code to reproduce the results in
 
 > Bass AJ, Wallace C. Exploiting pleiotropy to enhance variant discovery with functional false discovery rates.
